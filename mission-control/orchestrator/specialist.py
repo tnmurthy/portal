@@ -148,6 +148,30 @@ class SpecialistAgent:
         # 4. Finalize
         requires_approval = "APPROVE" in content.upper() or "READY FOR REVIEW" in content.upper()
 
+        # Asset Board Integration: Detect if agent is 'shipping' an artifact
+        if "SHIP:" in content.upper():
+            try:
+                # Extract filename and content from "SHIP: [filename] \n [content]"
+                parts = content.split("SHIP:", 1)[1].split("\n", 1)
+                asset_name = parts[0].strip()
+                asset_content = parts[1].strip() if len(parts) > 1 else ""
+                
+                self.state_manager.save_asset(
+                    mission_id=self.mission_id,
+                    agent_name=self.name,
+                    asset_name=asset_name,
+                    asset_type="document",
+                    content=asset_content
+                )
+                self.state_manager.log_activity(
+                    mission_id=self.mission_id,
+                    agent_name=self.name,
+                    activity_type="action",
+                    message=f"📦 SHIPPED ASSET: {asset_name}"
+                )
+            except Exception as asset_err:
+                print(f"Failed to save asset: {asset_err}")
+
         self.state_manager.log_activity(
             mission_id=self.mission_id,
             agent_name=self.name,

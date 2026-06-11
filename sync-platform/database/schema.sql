@@ -79,13 +79,15 @@ CREATE TABLE IF NOT EXISTS mc_agent_activity (
 
 -- ... (existing tables) ...
 
-CREATE TABLE IF NOT EXISTS mc_usage_logs (
-    id BIGSERIAL PRIMARY KEY,
+-- ... (existing tables) ...
+
+CREATE TABLE IF NOT EXISTS mc_assets (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     mission_id UUID REFERENCES mc_missions(id) ON DELETE CASCADE,
     agent_name TEXT NOT NULL,
-    model_name TEXT NOT NULL,
-    prompt_tokens INTEGER DEFAULT 0,
-    completion_tokens INTEGER DEFAULT 0,
-    estimated_cost FLOAT DEFAULT 0.0,
+    asset_name TEXT NOT NULL,
+    asset_type TEXT NOT NULL, -- 'document', 'image', 'code', 'data'
+    content TEXT, -- raw content or S3 link
+    metadata JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

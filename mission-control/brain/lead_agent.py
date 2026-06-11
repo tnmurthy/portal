@@ -52,6 +52,57 @@ class LeadAgent:
                 ]
             }
 
+    def create_review_board_manifest(self, mission_id: str = "review-001") -> SquadManifest:
+        """
+        Creates the specialized 5-judge Review Board manifest.
+        """
+        agents = [
+            AgentRole(
+                name="Dr. LENA",
+                specialty="LLM Systems Architect",
+                system_prompt="You are an LLM Systems Architect. Focus on model selection, RAG design, and orchestration. Apply Karpathy Knowledge Graph.",
+                tools=["search"]
+            ),
+            AgentRole(
+                name="MARCUS",
+                specialty="MLOps & Infrastructure",
+                system_prompt="You are an MLOps Engineer. Focus on deployment, latency, and observability. Be blunt and ops-focused.",
+                tools=["search"]
+            ),
+            AgentRole(
+                name="SOFIA",
+                specialty="AI Security & Ethics",
+                system_prompt="You are an AI Security Auditor. Focus on prompt injection, PII leakage, and compliance (GDPR/DPDP).",
+                tools=["search"]
+            ),
+            AgentRole(
+                name="RAJAN",
+                specialty="Product & UX Strategist",
+                system_prompt="You are a Product Strategist. Focus on UX, trust, and user-market fit.",
+                tools=["search"]
+            ),
+            AgentRole(
+                name="PRIYA",
+                specialty="AI Cost Optimizer",
+                system_prompt="You are a Cost Optimizer. Focus on token economics and ROI calculations.",
+                tools=["search"]
+            )
+        ]
+
+        infra = InfrastructureManifest(
+            tier=FulfillmentTier.PRO,
+            isolation_level="namespace",
+            priority=5,
+            data_retention_days=90
+        )
+
+        return SquadManifest(
+            mission_id=mission_id,
+            squad_name="Gen AI Architecture Review Board",
+            agents=agents,
+            infrastructure=infra
+        )
+
     def architect_squad(self, mission_brief: str, tier: FulfillmentTier = FulfillmentTier.BASIC) -> SquadManifest:
         """
         Takes a mission brief and generates a structured SquadManifest.

@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Terminal, Shield, Zap, Send, Play, CheckCircle2, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import AgentGraph from '@/components/AgentGraph';
+import ReviewBoard from '@/components/ReviewBoard';
 
 type Activity = {
     id: number;
@@ -13,6 +15,7 @@ type Activity = {
 };
 
 export default function MissionControl() {
+    const [activeView, setActiveAgentView] = useState<'mission' | 'review'>('mission');
     const [missionBrief, setMissionBrief] = useState('');
     const [tier, setTier] = useState('basic');
     const [isProposed, setIsProposed] = useState(false);
@@ -24,21 +27,29 @@ export default function MissionControl() {
     const [report, setReport] = useState<string | null>(null);
     const [isReporting, setIsReporting] = useState(false);
     const [totalCost, setTotalCost] = useState<number>(0.0);
+    const [activeAgent, setActiveAgent] = useState<string>('');
+    const [assets, setAssets] = useState<any[]>([]);
 
     const ws = useRef<WebSocket | null>(null);
     const feedRef = useRef<HTMLDivElement>(null);
 
-    // Poll Usage/Cost
+    // Poll Assets & Cost
     useEffect(() => {
         if (!missionId || status !== 'running') return;
-        const checkUsage = async () => {
+        const checkStats = async () => {
             try {
-                const res = await fetch(`http://localhost:8001/api/v1/mission/usage/${missionId}`);
-                const data = await res.json();
-                setTotalCost(data.total_estimated_cost);
+                // Poll Cost
+                const usageRes = await fetch(`http://localhost:8001/api/v1/mission/usage/${missionId}`);
+                const usageData = await usageRes.json();
+                setTotalCost(usageData.total_estimated_cost);
+
+                // Poll Assets
+                const assetsRes = await fetch(`http://localhost:8001/api/v1/mission/assets/${missionId}`);
+                const assetsData = await assetsRes.json();
+                setAssets(assetsData.assets);
             } catch (err) {}
         };
-        const interval = setInterval(checkUsage, 10000);
+        const interval = setInterval(checkStats, 10000);
         return () => clearInterval(interval);
     }, [missionId, status]);
 
@@ -78,6 +89,7 @@ export default function MissionControl() {
             setMissionId(data.mission_id);
             setIsProposed(true);
             setStatus('idle');
+            setActiveAgent('Lead Architect'); // Initial state
         } catch (err) {
             console.error(err);
             setStatus('idle');
@@ -95,6 +107,7 @@ export default function MissionControl() {
                 const data = JSON.parse(event.data);
                 if (data.agent_name) {
                     setActivities(prev => [...prev, data]);
+                    setActiveAgent(data.agent_name); // Light up the node in the graph
                     if (data.activity_type === 'error') setStatus('idle');
                 }
             };
@@ -123,15 +136,55 @@ export default function MissionControl() {
         }
     };
 
+    const approveAction = async () => {
+        try {
+            await fetch(`http://localhost:8001/api/v1/mission/approve/${missionId}`, {
+                method: 'POST'
+            });
+            setActivities(prev => [...prev, {
+                id: Date.now(),
+                agent_name: 'Human',
+                activity_type: 'action',
+                message: 'APPROVED: Proceed with next steps.',
+                created_at: new Date().toISOString()
+            }]);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
     return (
         <div className="flex h-screen bg-[#050505] text-white">
-            {/* Sidebar: Config */}
+            {/* ... aside contents remain same ... */}
             <aside className="w-80 border-r border-white/10 p-6 flex flex-col gap-6 bg-[#080808]">
                 <div className="flex items-center gap-2 mb-4">
                     <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center">
                         <Terminal className="w-5 h-5" />
                     </div>
                     <h1 className="font-bold text-xl tracking-tight uppercase">Mission Control</h1>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                    <button 
+                        onClick={() => setActiveAgentView('mission')}
+                        className={clsx(
+                            "flex items-center gap-3 p-3 rounded-lg transition-all text-left",
+                            activeView === 'mission' ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20" : "text-white/40 hover:bg-white/5"
+                        )}
+                    >
+                        <Zap className="w-4 h-4" />
+                        <span className="text-xs font-bold uppercase tracking-widest">Active Missions</span>
+                    </button>
+                    <button 
+                        onClick={() => setActiveAgentView('review')}
+                        className={clsx(
+                            "flex items-center gap-3 p-3 rounded-lg transition-all text-left",
+                            activeView === 'review' ? "bg-purple-600 text-white shadow-lg shadow-purple-600/20" : "text-white/40 hover:bg-white/5"
+                        )}
+                    >
+                        <Shield className="w-4 h-4" />
+                        <span className="text-xs font-bold uppercase tracking-widest">Review Board</span>
+                    </button>
                 </div>
 
                 <div className="space-y-4">
@@ -193,7 +246,9 @@ export default function MissionControl() {
             {/* Main Area */}
             <main className="flex-1 flex flex-col">
                 <div className="flex-1 p-8 overflow-auto flex flex-col items-center">
-                    {!isProposed ? (
+                    {activeView === 'review' ? (
+                        <ReviewBoard />
+                    ) : !isProposed ? (
                         <motion.div 
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -222,98 +277,122 @@ export default function MissionControl() {
                         </motion.div>
                     ) : (
                         <div className="w-full flex gap-8 h-full">
-                            {/* Left: Squad Manifest */}
+                            {/* Left: Agent Graph Visualizer */}
                             <motion.div 
                                 initial={{ opacity: 0, x: -20 }}
                                 animate={{ opacity: 1, x: 0 }}
-                                className="w-1/3 bg-white/5 border border-white/10 rounded-3xl p-6 flex flex-col"
+                                className="w-2/5 flex flex-col"
                             >
-                                <div className="flex justify-between items-start mb-6">
-                                    <div>
-                                        <span className="text-[10px] uppercase tracking-widest text-blue-500 font-bold mb-1 block">Deployment Manifest</span>
-                                        <h3 className="text-2xl font-bold">{manifest?.squad_name}</h3>
-                                    </div>
-                                    <div className="px-3 py-1 bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-full text-[10px] font-bold uppercase tracking-tighter">
-                                        {manifest?.infrastructure?.tier}
-                                    </div>
+                                <div className="mb-6">
+                                    <span className="text-[10px] uppercase tracking-widest text-blue-500 font-bold mb-1 block">Live Squad Graph</span>
+                                    <h3 className="text-2xl font-bold">{manifest?.squad_name}</h3>
                                 </div>
-
-                                <div className="space-y-4 flex-1 overflow-auto pr-2 custom-scrollbar">
-                                    {manifest?.agents.map((agent: any, i: number) => (
-                                        <div key={i} className="p-4 rounded-xl bg-black/40 border border-white/5">
-                                            <div className="flex items-center gap-2 mb-2 text-white/80">
-                                                <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-                                                <span className="font-bold text-sm">{agent.name}</span>
-                                                <span className="text-[10px] text-white/30 uppercase">— {agent.specialty}</span>
-                                            </div>
-                                            <p className="text-[11px] text-white/40 leading-relaxed italic line-clamp-3">
-                                                "{agent.system_prompt}"
-                                            </p>
-                                        </div>
-                                    ))}
+                                
+                                <div className="flex-1 min-h-[400px]">
+                                    <AgentGraph manifest={manifest} currentAgent={activeAgent} />
                                 </div>
 
                                 <button 
                                     onClick={startMission}
                                     disabled={status === 'running'}
-                                    className="mt-6 w-full py-4 bg-blue-600 hover:bg-blue-500 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all"
+                                    className="mt-6 w-full py-4 bg-blue-600 hover:bg-blue-500 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all shadow-[0_0_20px_rgba(37,99,235,0.4)]"
                                 >
-                                    <Play className="w-4 h-4 fill-current" /> Execute Mission
+                                    <Play className="w-4 h-4 fill-current" /> {status === 'running' ? 'Active Mission' : 'Execute Mission'}
                                 </button>
                             </motion.div>
 
-                            {/* Right: Live Feed */}
-                            <motion.div 
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                className="flex-1 bg-black/50 border border-white/10 rounded-3xl flex flex-col overflow-hidden relative"
-                            >
-                                <div className="p-6 border-b border-white/10 flex justify-between items-center bg-black/40">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                                        <h3 className="text-sm font-bold uppercase tracking-widest text-white/60">Live Operational Feed</h3>
-                                    </div>
-                                    <div className="flex items-center gap-4">
-                                        <button 
-                                            onClick={approveAction}
-                                            className="px-4 py-1.5 bg-green-600/20 hover:bg-green-600 text-green-400 hover:text-white border border-green-500/30 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all"
-                                        >
-                                            Approve Step
-                                        </button>
-                                        <div className="text-[10px] text-white/30 font-mono italic">ID: {missionId?.slice(0, 8)}</div>
-                                    </div>
-                                </div>
-
-                                <div 
-                                    ref={feedRef}
-                                    className="flex-1 p-6 overflow-y-auto font-mono text-sm space-y-4 scroll-smooth"
+                            {/* Right: Live Feed & Asset Board */}
+                            <div className="flex-1 flex flex-col gap-8 h-full">
+                                <motion.div 
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    className="flex-1 bg-black/50 border border-white/10 rounded-3xl flex flex-col overflow-hidden relative"
                                 >
-                                    {activities.length === 0 ? (
-                                        <div className="h-full flex flex-col items-center justify-center text-center opacity-20">
-                                            <Terminal className="w-12 h-12 mb-4" />
-                                            <p className="text-sm">Waiting for agent activation...</p>
+                                    <div className="p-6 border-b border-white/10 flex justify-between items-center bg-black/40">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                                            <h3 className="text-sm font-bold uppercase tracking-widest text-white/60">Live Operational Feed</h3>
                                         </div>
-                                    ) : (
-                                        activities.map((act, i) => (
-                                            <div key={i} className={clsx(
-                                                "p-4 rounded-lg border-l-2",
-                                                act.activity_type === 'thought' ? "border-blue-500 bg-blue-500/5" : "border-green-500 bg-green-500/5"
-                                            )}>
-                                                <div className="flex justify-between mb-2">
-                                                    <span className={clsx(
-                                                        "text-[10px] font-bold uppercase tracking-tighter",
-                                                        act.activity_type === 'thought' ? "text-blue-400" : "text-green-400"
-                                                    )}>
-                                                        {act.agent_name} :: {act.activity_type}
-                                                    </span>
-                                                    <span className="text-[9px] text-white/20">{new Date(act.created_at).toLocaleTimeString()}</span>
-                                                </div>
-                                                <p className="text-white/80 leading-relaxed whitespace-pre-wrap">{act.message}</p>
+                                        <div className="flex items-center gap-4">
+                                            <button 
+                                                onClick={approveAction}
+                                                className="px-4 py-1.5 bg-green-600/20 hover:bg-green-600 text-green-400 hover:text-white border border-green-500/30 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all"
+                                            >
+                                                Approve Step
+                                            </button>
+                                            <div className="text-[10px] text-white/30 font-mono italic">ID: {missionId?.slice(0, 8)}</div>
+                                        </div>
+                                    </div>
+
+                                    <div 
+                                        ref={feedRef}
+                                        className="flex-1 p-6 overflow-y-auto font-mono text-sm space-y-4 scroll-smooth"
+                                    >
+                                        {activities.length === 0 ? (
+                                            <div className="h-full flex flex-col items-center justify-center text-center opacity-20">
+                                                <Terminal className="w-12 h-12 mb-4" />
+                                                <p className="text-sm">Waiting for agent activation...</p>
                                             </div>
-                                        ))
-                                    )}
-                                </div>
-                            </motion.div>
+                                        ) : (
+                                            activities.map((act, i) => (
+                                                <div key={i} className={clsx(
+                                                    "p-4 rounded-lg border-l-2",
+                                                    act.activity_type === 'thought' ? "border-blue-500 bg-blue-500/5" : "border-green-500 bg-green-500/5"
+                                                )}>
+                                                    <div className="flex justify-between mb-2">
+                                                        <span className={clsx(
+                                                            "text-[10px] font-bold uppercase tracking-tighter",
+                                                            act.activity_type === 'thought' ? "text-blue-400" : "text-green-400"
+                                                        )}>
+                                                            {act.agent_name} :: {act.activity_type}
+                                                        </span>
+                                                        <span className="text-[9px] text-white/20">{new Date(act.created_at).toLocaleTimeString()}</span>
+                                                    </div>
+                                                    <p className="text-white/80 leading-relaxed whitespace-pre-wrap">{act.message}</p>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </motion.div>
+
+                                {/* Asset Board */}
+                                <motion.div 
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="h-1/3 bg-white/5 border border-white/10 rounded-3xl p-6 flex flex-col overflow-hidden"
+                                >
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <Shield className="w-4 h-4 text-blue-500" />
+                                        <h3 className="text-xs font-bold uppercase tracking-widest text-white/60">Mission Asset Board</h3>
+                                    </div>
+                                    
+                                    <div className="flex-1 overflow-x-auto flex gap-4 pb-2">
+                                        {assets.length === 0 ? (
+                                            <div className="w-full flex items-center justify-center text-white/20 text-[10px] uppercase font-bold tracking-tighter">
+                                                No artifacts shipped yet
+                                            </div>
+                                        ) : (
+                                            assets.map((asset, i) => (
+                                                <div key={i} className="min-w-[200px] bg-black/40 border border-white/5 rounded-2xl p-4 flex flex-col justify-between hover:border-blue-500/30 transition-all cursor-pointer group">
+                                                    <div>
+                                                        <div className="flex justify-between items-start mb-2">
+                                                            <div className="px-2 py-0.5 bg-blue-500/10 text-blue-400 rounded text-[8px] font-bold uppercase tracking-tighter">
+                                                                {asset.asset_type}
+                                                            </div>
+                                                            <Terminal className="w-3 h-3 text-white/20 group-hover:text-blue-500 transition-colors" />
+                                                        </div>
+                                                        <h4 className="text-xs font-bold text-white/80 mb-1 truncate">{asset.asset_name}</h4>
+                                                        <p className="text-[10px] text-white/30 truncate">By {asset.agent_name}</p>
+                                                    </div>
+                                                    <div className="text-[9px] text-white/20 mt-4">
+                                                        {new Date(asset.created_at).toLocaleDateString()}
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </motion.div>
+                            </div>
                         </div>
                     )}
                 </div>

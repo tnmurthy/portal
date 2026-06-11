@@ -52,3 +52,20 @@ class StateManager:
         with self.conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute("SELECT * FROM mc_missions WHERE id = %s", (mission_id,))
             return cur.fetchone()
+
+    def save_asset(self, mission_id: str, agent_name: str, asset_name: str, asset_type: str, content: str, metadata: dict = None):
+        with self.conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO mc_assets (mission_id, agent_name, asset_name, asset_type, content, metadata)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                RETURNING id
+                """,
+                (mission_id, agent_name, asset_name, asset_type, content, json.dumps(metadata or {}))
+            )
+            return cur.fetchone()[0]
+
+    def get_mission_assets(self, mission_id: str):
+        with self.conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("SELECT * FROM mc_assets WHERE mission_id = %s ORDER BY created_at DESC", (mission_id,))
+            return cur.fetchall()

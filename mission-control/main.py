@@ -111,6 +111,28 @@ async def propose_mission(request: MissionRequest):
         print(f"Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/api/v1/mission/review", response_model=SquadManifest)
+async def propose_review_board(request: MissionRequest):
+    """
+    Initializes the Gen AI Architecture Review Board mission.
+    """
+    try:
+        # Create the specialized board manifest
+        manifest = lead_agent.create_review_board_manifest()
+        
+        # Persist to DB
+        mission_id = state_manager.create_mission(
+            name=manifest.squad_name,
+            brief=request.brief,
+            tier="pro",
+            manifest=manifest.model_dump()
+        )
+        
+        manifest.mission_id = str(mission_id)
+        return manifest
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/api/v1/mission/execute/{mission_id}")
 async def execute_mission(mission_id: str, background_tasks: BackgroundTasks):
     """
@@ -167,6 +189,17 @@ async def get_report(mission_id: str):
             "report_markdown": markdown_content,
             "file_saved_at": file_path
         }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/mission/assets/{mission_id}")
+async def get_assets(mission_id: str):
+    """
+    Returns a list of artifacts generated during the mission.
+    """
+    try:
+        assets = state_manager.get_mission_assets(mission_id)
+        return {"mission_id": mission_id, "assets": assets}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
