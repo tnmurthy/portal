@@ -77,15 +77,15 @@ CREATE TABLE IF NOT EXISTS mc_agent_activity (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Enable real-time notifications for the dashboard
-CREATE OR REPLACE FUNCTION notify_agent_activity()
-RETURNS TRIGGER AS $$
-BEGIN
-  PERFORM pg_notify('agent_activity_channel', row_to_json(NEW)::text);
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+-- ... (existing tables) ...
 
-CREATE TRIGGER agent_activity_trigger
-AFTER INSERT ON mc_agent_activity
-FOR EACH ROW EXECUTE FUNCTION notify_agent_activity();
+CREATE TABLE IF NOT EXISTS mc_usage_logs (
+    id BIGSERIAL PRIMARY KEY,
+    mission_id UUID REFERENCES mc_missions(id) ON DELETE CASCADE,
+    agent_name TEXT NOT NULL,
+    model_name TEXT NOT NULL,
+    prompt_tokens INTEGER DEFAULT 0,
+    completion_tokens INTEGER DEFAULT 0,
+    estimated_cost FLOAT DEFAULT 0.0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);

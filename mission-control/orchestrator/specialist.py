@@ -4,6 +4,7 @@ from typing import Dict, Any, List
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from brain.state_manager import StateManager
+from brain.usage_tracker import UsageTracker
 from .tools import AVAILABLE_TOOLS
 
 class SpecialistAgent:
@@ -17,6 +18,7 @@ class SpecialistAgent:
         self.system_prompt = system_prompt
         self.mission_id = mission_id
         self.state_manager = StateManager()
+        self.usage_tracker = UsageTracker()
         self.ollama_url = "http://localhost:11434/api/chat"
         self.ollama_model = "qwen2.5-coder:7b"
         
@@ -79,6 +81,17 @@ class SpecialistAgent:
         try:
             response = self.llm.invoke(messages)
             content = response.content
+            
+            # Extract token usage if available
+            usage = getattr(response, "response_metadata", {}).get("token_usage", {})
+            if usage:
+                self.usage_tracker.log_usage(
+                    mission_id=self.mission_id,
+                    agent_name=self.name,
+                    model="gpt-4o",
+                    prompt_tokens=usage.get("prompt_tokens", 0),
+                    completion_tokens=usage.get("completion_tokens", 0)
+                )
         except Exception as e:
             print(f"[{self.name}] Primary LLM failed: {e}")
             self.state_manager.log_activity(
@@ -89,6 +102,15 @@ class SpecialistAgent:
             )
             content = self._ollama_fallback(messages)
             response = AIMessage(content=content)
+            
+            # Log zero-cost local usage (heuristic estimation or just 0 for FDE)
+            self.usage_tracker.log_usage(
+                mission_id=self.mission_id,
+                agent_name=self.name,
+                model=self.ollama_model,
+                prompt_tokens=0,
+                completion_tokens=0
+            )
 
         # 3. Handle Tool Calls
         if hasattr(response, "tool_calls") and response.tool_calls:

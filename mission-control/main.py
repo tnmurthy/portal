@@ -8,6 +8,7 @@ from typing import Optional, List, Dict
 from brain.lead_agent import LeadAgent
 from brain.state_manager import StateManager
 from brain.report_generator import ReportGenerator
+from brain.usage_tracker import UsageTracker
 from manifests.models import FulfillmentTier, SquadManifest
 from orchestrator.engine import ExecutionEngine
 
@@ -15,6 +16,7 @@ app = FastAPI(title="Mission Control Gateway", version="1.0.0")
 lead_agent = LeadAgent()
 state_manager = StateManager()
 report_gen = ReportGenerator()
+usage_tracker = UsageTracker()
 
 # Global dict to store active engines for the MVP
 active_missions: Dict[str, ExecutionEngine] = {}
@@ -135,6 +137,17 @@ async def approve_mission(mission_id: str):
     # For the prototype, we simulate the approval.
     # In production, we would use app.update_state in LangGraph.
     return {"status": "approved", "message": "Mission resumed"}
+
+@app.get("/api/v1/mission/usage/{mission_id}")
+async def get_usage(mission_id: str):
+    """
+    Returns the total estimated cost for a specific mission.
+    """
+    try:
+        total_cost = usage_tracker.get_mission_total_cost(mission_id)
+        return {"mission_id": mission_id, "total_estimated_cost": total_cost}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/v1/mission/report/{mission_id}")
 async def get_report(mission_id: str):

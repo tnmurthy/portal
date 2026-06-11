@@ -23,9 +23,24 @@ export default function MissionControl() {
     const [health, setHealth] = useState<any>({ database: 'offline', openai: 'unknown', ollama: 'offline' });
     const [report, setReport] = useState<string | null>(null);
     const [isReporting, setIsReporting] = useState(false);
-    
+    const [totalCost, setTotalCost] = useState<number>(0.0);
+
     const ws = useRef<WebSocket | null>(null);
     const feedRef = useRef<HTMLDivElement>(null);
+
+    // Poll Usage/Cost
+    useEffect(() => {
+        if (!missionId || status !== 'running') return;
+        const checkUsage = async () => {
+            try {
+                const res = await fetch(`http://localhost:8001/api/v1/mission/usage/${missionId}`);
+                const data = await res.json();
+                setTotalCost(data.total_estimated_cost);
+            } catch (err) {}
+        };
+        const interval = setInterval(checkUsage, 10000);
+        return () => clearInterval(interval);
+    }, [missionId, status]);
 
     // Poll Health Status
     useEffect(() => {
@@ -158,6 +173,13 @@ export default function MissionControl() {
                         <span className="text-xs font-medium text-white/60 group-hover:text-white">Generate Audit Report</span>
                         <Terminal className="w-4 h-4 opacity-30 group-hover:opacity-100" />
                     </button>
+                </div>
+
+                <div className="space-y-4">
+                    <label className="text-xs font-semibold text-white/40 uppercase tracking-widest">Financials</label>
+                    <div className="bg-white/5 rounded-xl p-4 border border-white/5">
+                        <StatNode label="Total Mission Cost" value={`$${totalCost.toFixed(4)}`} />
+                    </div>
                 </div>
 
                 <div className="space-y-4 mt-auto">
@@ -357,6 +379,15 @@ function HealthNode({ label, status }: { label: string, status: string }) {
                     status === 'online' || status === 'configured' ? "bg-green-500 shadow-green-500/50" : "bg-red-500 shadow-red-500/50"
                 )} />
             </div>
+        </div>
+    );
+}
+
+function StatNode({ label, value }: { label: string, value: string }) {
+    return (
+        <div className="flex items-center justify-between">
+            <span className="text-[11px] text-white/50 font-mono">{label}</span>
+            <span className="text-[11px] font-bold text-blue-400 font-mono">{value}</span>
         </div>
     );
 }
