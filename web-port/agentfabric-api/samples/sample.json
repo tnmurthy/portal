@@ -1,0 +1,15 @@
+{
+  "project": "AgentFabric",
+  "version": "1.0",
+  "features": [
+    "AI Chat",
+    "Generators",
+    "Markdown Converters",
+    "Utility Tools"
+  ],
+  "is_active": true,
+  "stats": {
+    "total_tools": 36,
+    "completed": 28
+  }
+}
