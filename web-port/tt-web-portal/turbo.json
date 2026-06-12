@@ -1,0 +1,14 @@
+{
+  "extends": ["//"],
+  "globalEnv": ["NODE_ENV", "CI", "VERCEL_URL"],
+  "pipeline": {
+    "build": {"dependsOn": ["^build"], "outputs": [".next/**", "dist/**"], "cache": false},
+    "lint": {"outputs": []},
+    "type-check": {"outputs": []},
+    "test": {"outputs": ["coverage/**"], "cache": false},
+    "test:coverage": {"outputs": ["coverage/**"], "cache": false},
+    "dev": {"cache": false, "persistent": true},
+    "db:migrate": {"cache": false},
+    "db:seed": {"cache": false, "dependsOn": ["db:migrate"]}
+  }
+}
