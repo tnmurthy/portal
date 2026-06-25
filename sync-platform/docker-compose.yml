@@ -1,0 +1,19 @@
+# Setup for the AI Data Sync Platform
+# Includes PostgreSQL with pgvector and Redis for queues
+
+services:
+  db:
+    image: ankane/pgvector:latest
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: sync_platform
+    volumes:
+      - ./sync-platform/database/init:/docker-entrypoint-initdb.d
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"

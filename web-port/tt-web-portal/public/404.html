@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Not found — loading app</title>
+</head>
+<body>
+<script>
+  (async function () {
+    const pathSegments = location.pathname.split('/').filter(Boolean);
+    const base = pathSegments[0] === 'portal' ? '/portal/' : '/';
+
+    try {
+      const res = await fetch(base + 'index.html');
+      const html = await res.text();
+      document.open();
+      document.write(html);
+      document.close();
+    } catch (err) {
+      console.error('Failed to load app', err);
+      location.replace(base);
+    }
+  })();
+</script>
+</body>
+</html>

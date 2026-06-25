@@ -1,0 +1,26 @@
+ai-data-sync-architecture.md
+FedFina_Executive_Summary_Slides.md
+FedFina_HLD.md
+FedFina_PRD_BRD.md
+FedFina_solution_diagram.md
+fedfina_text.txt
+mission-control-analysis.md
+mission-control-architecture.md
+mission-control-detailed-blueprint.md
+ULTIMATE_CONTEXT.md
+mission-control\PROJECT_OVERLORD_HANDOVER.md
+mission-control\requirements.txt
+sync-platform\README.md
+sync-platform\SUMMARY.md
+sync-platform\api\requirements.txt
+sync-platform\pipeline\requirements.txt
+web-port\agentfabric-api\requirements.txt
+web-port\tt-web-portal\INTEGRATION_GUIDE.md
+web-port\tt-web-portal\MARKET_ANALYSIS.md
+web-port\tt-web-portal\README.md
+web-port\tt-web-portal\SPRINT_ROADMAP.md
+web-port\tt-web-portal\TECHNICAL_SPEC.md
+web-port\tt-web-portal\public\robots.txt
+final doc - Consultant Workflow.pdf
+Leadership Workflow - Glass Theme v4.pdf
+web-port\tt-web-portal\public\favicon.svg

@@ -1,0 +1,87 @@
+Numentica’s response to FEDBANK FINANCIAL SERVICES LIMITEDResponse for DATA ANALYTICS PLATFORM MODERNIZATION
+PROJECTContents TOC \o "1-3" \h \z \u 1.
+Executive Summary PAGEREF _Toc168516899 \h 3 2.
+About Numentica PAGEREF _Toc168516900 \h 3 3.
+Project Scope PAGEREF _Toc168516901 \h 3 3.1.
+Current Data Flow Process in Datalake PAGEREF _Toc168516902 \h 3 3.2.
+Key Challenges within the Existing System Landscape PAGEREF _Toc168516903 \h 3 3.3.
+Limitations of the Current Datalake Architecture PAGEREF _Toc168516904 \h 5 4.
+Numentica’s Solution PAGEREF _Toc168516905 \h 5 4.1.
+Proposed Architecture PAGEREF _Toc168516906 \h 5 4.2.
+Mitigation of Present Challenges PAGEREF _Toc168516907 \h 5 4.3.
+Business Benefits PAGEREF _Toc168516908 \h 5 4.4.
+Further Recommendations for Optimal State Architecture PAGEREF _Toc168516909 \h 6 4.5.
+Technology Criteria &amp; Recommendation PAGEREF _Toc168516910 \h 6 5.
+Detailed Commercials PAGEREF _Toc168516911 \h 6Executive SummaryAbout NumenticaProject Scope Current Data Flow Process
+in DatalakeKey Challenges within the Existing System Landscape1) Not all DBs are integrated in datalake.e.g.
+they have a file tracking system which has information about what loans are disbursed and that is sent to some agency.
+They don’t have any reporting requirements for this hence it is not brought to datalake.e.g.
+Digital team has separate DBs for Vendor Management System, Lead Management System, Legal, ERM (Internal software for
+enquiries), app/website.
+These are small tables hence not yet moved to datalake.2) Primary Key-Reference key column names are different between
+tables in Finnone.
+This is because of how Finnone source system sends the data.
+So, unless someone knows the Finnone system it is difficult to understand the relationship between tables.3) Even though
+all raw tables are fetched in datalake for Finnone and Lcode, still the source system is hit to generate dumps which are
+used by analytics team to for reporting in Altair.
+This is because it is difficult for Analytics team to understand the structure of core system tables AND not all columns
+from raw tables are important for their reports.
+4) Datalake tables do not have indexing (only some tables have as per need basis).
+Source system Finnone and Lcode have indexing.
+5) Frequent changes in the queries from Finnone and Lcode because of change in business requirements.
+Adhoc reports during audit time are also needed.
+This involves dependency on source system.
+6) For LCODE, the Fedfina team does not have direct access to source system.
+They pass on the BRD to LCODE vendor and are completely dependent on the vendor to create query.7) Additional overhead
+for Analytics team to maintain the Lampstack DB.
+Some business users provide data like budget files, HR related files using upload option.
+For these separate tables are created in Lampstack DB.Additional data processing is done by Analytics team on top of the
+views exposed via datalake like merging of some dumps, logic creation.
+All this happens in MYSQL workbench of Lampstack DB.For any trend analysis reports where past data is required,
+Lampstack DB is used for storage of old data.
+8) Data issues in the views exposed from datalake to Analytics team.
+This is mainly due to incorrect queries written by source systems while generating dumps.
+9) Issues while reading data from Datalake to Altair.
+This is due to JDBC connector issue.
+10) Changes and new report requests from Altair are very common.
+Everytime they have a dependency on IT team to provision that data in datalake first before they can do further
+processing to generate the required report.
+11) Currently reports are generated from S3, Datalake views, ALTAIR, Power BI, SSRS both manually and automatically.
+There is no centralized system and process for reporting.
+Everything should be done from Altair.
+Additional Opportunities of Automation/Optimization1) Etouch schema in datalake is a customer servicing system.
+Dashboards created from etouch schema are sent via email.
+NOT AUTOMATED THROUGH ALTAIR.2) Fedfina bureau schema in datalake holds cibil related information.
+Risk analysis reports are created from this system on need basis by running queries.
+NOT AUTOMATED THROUGH ALTAIR.3) Interactive dashboards are generated from Salesforce source system directly.
+They want to do that from Datalake.4) SSRS and Power BI are also used for reporting.
+Everything should move to Altair (already in plan)5) AL and ML models to be built for advanced analytics in reports
+(already in plan)Limitations of the Current Datalake ArchitectureWe should be covering below points for this section:Is
+it even correct to call their existing system as a datalake?How is it not an ideal datalake architecture?
+Compare with other NBFCs how they are designing their datalake.What is the impact Fedfina will have by not having an
+ideal datalake architecture?What is Fedfina losing by not having Data Governance setup?Numentica’s Solution Proposed
+ArchitectureMitigation of Present ChallengesHave to mention how the proposed architecture solves each of the above
+mentioned challenges.Business Benefits For all the challenges that will be solved by Numentica’s solution, what would be
+the business benefit e.g.
+increase in customer acquisition rate, customer retention, marketing would improve, data-driven decision making
+etc.Further Recommendations for Optimal State ArchitectureData Governance can be part of this section.Technology
+Criteria &amp; RecommendationAll the AWS services as part of the proposed architecture can be described here with its
+use and benefits.If we are planning to recommend anything other than AWS then a comparative study can be put
+here.Detailed CommercialsIt will be a T&amp;M based contract.Additional information as requested – No.
+of queries and its complexity for each dashboardDepends on the report requirement.
+Majorly merging of views like views having risk data is merged with views having HR data AND logic implementation like
+how much old data is needed, department level filteration, product level filteration etc.
+Complexity of queries – MediumData volumeDepends on how much old data is required by the department in which report.
+As of now one of the risk reports have Maximum data volume of 30-40 lakh.No.
+of dashboards4-5 Power BI reports are moved to Altair that take around 2-3 hours to prepare.60-70 management reports go
+monthly via AltairDaily no.
+if reports – Need to checkNo.
+of views they are using40-50 dumps from Finnone and 40-50 dumps from Lcode on a daily basis.Maximum no.
+of views used in a single dashboard query – Need to checkFrequency of dashboardDaily reports go at 8 AM IST via
+scheduler through emailMonthly reports are also thereFrequency from Glue to DatalakeDaily between 1-7 AM IST all glue
+jobs runNo.
+of Glue jobs that run every dayOnly Infra team can confirm.
+Do not have visibility.Resourcing Cost: Project Phase Resources Location Total Cost Requirement Gathering Design
+Implementation UAT Go-Live Training and Support Post Go-live Support Timelines in Gantt ChartFedfina Resources’ Support:
+Project Phase Team # of Resources Timelines #of Hours Requirement Gathering Design Implementation UAT Go-Live Training
+and Support Post Go-live Support Software Services Cost: Product Price/month Estimated Monthly DBU's

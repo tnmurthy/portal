@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Not found — loading app</title>
+</head>
+<body>
+<script>
+  // SPA fallback: load the built index.html so the client router can handle the original path.
+  (async function(){
+    try {
+      const res = await fetch('/index.html');
+      const html = await res.text();
+      document.open();
+      document.write(html);
+      document.close();
+    } catch (err) {
+      console.error('Failed to load app', err);
+      // Last-resort fallback: redirect to root
+      location.replace('/');
+    }
+  })();
+</script>
+</body>
+</html>
