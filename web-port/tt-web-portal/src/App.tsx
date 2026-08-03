@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+const Projects = lazy(() => import('./pages/Projects'));
 const Home = lazy(() => import('./pages/Home'));
 const Services = lazy(() => import('./pages/Services'));
 const CaseStudies = lazy(() => import('./pages/CaseStudies'));
@@ -18,7 +19,7 @@ const ExampleTool = lazy(() => import('./pages/tools/ExampleTool'));
 
 import { useRouting } from './hooks/useRouting';
 
-export type View = 'home' | 'services' | 'case-studies' | 'about' | 'contact' | 'sandbox' | 'tool-hub' | string;
+export type View = 'home' | 'services' | 'case-studies' | 'about' | 'contact' | 'sandbox' | 'tool-hub' | 'projects' | string;
 
 function App() {
   const { activeView, navigate } = useRouting('home');
@@ -48,6 +49,7 @@ function App() {
       case 'contact': return <Contact />;
       case 'sandbox': return <Sandbox />;
       case 'tool-hub': return <ToolHub />;
+	  case 'projects': return <Projects />;
       default: return <Home onNavigate={navigate} />;
     }
   };

@@ -14,6 +14,7 @@ const navLinks: { label: string; view: View }[] = [
   { label: 'Case Studies', view: 'case-studies' },
   { label: 'About', view: 'about' },
   { label: 'AgentFabric Sandbox', view: 'sandbox' },
+  { label: 'Projects', view: 'projects' },
   { label: 'Tool Hub', view: 'tool-hub' },
   { label: 'Contact', view: 'contact' },
 ];

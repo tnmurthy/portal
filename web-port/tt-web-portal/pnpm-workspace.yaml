@@ -2,6 +2,9 @@ packages:
   - "packages/*"
   - "apps/*"
 
+allowBuilds:
+  esbuild: true
+
 catalogs:
   react:
     react: "^18.3.1"
