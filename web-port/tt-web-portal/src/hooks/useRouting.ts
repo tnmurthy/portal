@@ -7,7 +7,7 @@ export function useRouting(defaultView: View = 'home') {
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#/', '');
-      const validViews: string[] = ['home', 'services', 'case-studies', 'about', 'contact', 'sandbox', 'tool-hub'];
+      const validViews: string[] = ['home', 'services', 'case-studies', 'about', 'contact', 'sandbox', 'tool-hub', 'projects'];
       if (validViews.includes(hash) || hash.startsWith('tool-') || hash.startsWith('tool-view-')) {
         setActiveView(hash);
       } else if (!hash) {
