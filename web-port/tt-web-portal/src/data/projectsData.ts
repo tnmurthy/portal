@@ -142,13 +142,12 @@ export const activeProjects: Project[] = [
   },
   {
     id: 'portal',
-    name: 'Portfolio Portal',
+    name: 'Talia Web Portal',
     folder: 'portal',
-    description: 'Source repo for portfolio.mytestbed.tech — modern React portfolio site.',
-    stack: ['React', 'Vite', 'Tailwind'],
+    description: 'Talia Technologies marketing site and AgentFabric tool hub, now also housing Mission Control (multi-agent command center) and this Projects dashboard.',
+    stack: ['React', 'Vite', 'Tailwind', 'Python', 'FastAPI'],
     category: 'Internal',
     status: 'active',
-    url: 'https://portfolio.mytestbed.tech',
   },
 ];
 
